@@ -1,0 +1,17 @@
+name: 'private cargo dependencies'
+description: 'Let cargo fetch the private DayDreamDental/ngrok-rust fork over SSH'
+inputs:
+  ssh-private-key:
+    description: 'Read-only deploy key for DayDreamDental/ngrok-rust'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: webfactory/ssh-agent@v0.9.1
+      with:
+        ssh-private-key: ${{ inputs.ssh-private-key }}
+    - name: fetch ngrok-rust over SSH
+      shell: bash
+      run: |
+        git config --global url."ssh://git@github.com/DayDreamDental/ngrok-rust".insteadOf "https://github.com/DayDreamDental/ngrok-rust"
+        echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> "$GITHUB_ENV"
