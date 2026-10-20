@@ -12,7 +12,7 @@ on:
         required: false
   push:
     branches:
-      - '**'
+      - main
     tags-ignore:
       - '**'
     paths-ignore:
@@ -23,9 +23,6 @@ on:
       - docs/**
   workflow_dispatch:
   pull_request:
-    types: [opened, reopened] # when a pull request is opened or reopened
-    branches:
-      - main # the branch that the pull request is targeting
 jobs:
   udeps:
     name: Udeps
