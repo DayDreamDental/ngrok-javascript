@@ -1007,7 +1007,7 @@ dependencies = [
 [[package]]
 name = "muxado"
 version = "0.5.3"
-source = "git+https://github.com/DayDreamDental/ngrok-rust.git?rev=16c1f937ee85c3e1de4bbef9a004d931dadfeb64#16c1f937ee85c3e1de4bbef9a004d931dadfeb64"
+source = "git+https://github.com/DayDreamDental/ngrok-rust.git?rev=995dcbe2715299a77abcf93f03b9d4b4b78e3b65#995dcbe2715299a77abcf93f03b9d4b4b78e3b65"
 dependencies = [
  "async-trait",
  "awaitdrop",
@@ -1083,7 +1083,7 @@ dependencies = [
 [[package]]
 name = "ngrok"
 version = "0.18.0"
-source = "git+https://github.com/DayDreamDental/ngrok-rust.git?rev=16c1f937ee85c3e1de4bbef9a004d931dadfeb64#16c1f937ee85c3e1de4bbef9a004d931dadfeb64"
+source = "git+https://github.com/DayDreamDental/ngrok-rust.git?rev=995dcbe2715299a77abcf93f03b9d4b4b78e3b65#995dcbe2715299a77abcf93f03b9d4b4b78e3b65"
 dependencies = [
  "arc-swap",
  "async-trait",
@@ -1137,6 +1137,7 @@ dependencies = [
  "napi-derive",
  "ngrok",
  "parking_lot",
+ "rand",
  "regex",
  "rustls",
  "rustls-pemfile",
