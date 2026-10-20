@@ -24,6 +24,9 @@ on:
       target:
         required: true
         type: string
+    secrets:
+      NGROK_RUST_DEPLOY_KEY:
+        required: false
 jobs:
   reusable-build:
     if: ${{ inputs.if }}
@@ -32,6 +35,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - uses: ./.github/workflows/private-deps
+        with:
+          ssh-private-key: ${{ secrets.NGROK_RUST_DEPLOY_KEY }}
       - name: Setup node
         uses: actions/setup-node@v4
         if: ${{ !inputs.docker }}
@@ -91,6 +97,9 @@ jobs:
           run: ${{ inputs.build }}
       - name: Build
         run: ${{ inputs.build }}
+        if: ${{ !inputs.docker }}
+      - name: Load bindings
+        run: node -e "require('./index.js')"
         if: ${{ !inputs.docker }}
       - name: Upload bindings artifact
         uses: actions/upload-artifact@v4

@@ -1,5 +1,6 @@
 use std::{
     env,
+    iter,
     sync::Arc,
     time::Duration,
 };
@@ -14,6 +15,7 @@ use napi::{
         ThreadsafeFunction,
         ThreadsafeFunctionCallMode,
     },
+    JsObject,
 };
 use napi_derive::napi;
 use ngrok::{
@@ -180,6 +182,77 @@ impl SessionBuilder {
         builder
             .heartbeat_tolerance(Duration::new(heartbeat_tolerance.into(), 0))
             .map_err(|e| napi_err(format!("{e}")))?;
+        Ok(self)
+    }
+
+    /// Configures the delays between reconnect attempts after the session loses
+    /// its connection to the ngrok service. Each disconnect starts again from the
+    /// first delay. With `jitter`, each delay is a random value from 0 to the
+    /// computed delay.
+    ///
+    /// The default is exponential from 50ms, capped at 30s, with jitter.
+    #[napi(ts_args_type = "backoff: ReconnectBackoff")]
+    pub fn reconnect_backoff(&mut self, backoff: JsObject) -> Result<&Self> {
+        let millis = |name: &str| -> Result<Duration> {
+            backoff
+                .get::<_, f64>(name)?
+                .filter(|ms| *ms >= 0.0)
+                .and_then(|ms| Duration::try_from_secs_f64(ms / 1000.0).ok())
+                .ok_or_else(|| napi_err("reconnect backoff durations must be finite numbers >= 0"))
+        };
+        let kind: String = backoff
+            .get("type")?
+            .ok_or_else(|| napi_err("reconnect backoff type is required"))?;
+        let jitter = backoff.get::<_, bool>("jitter")?.unwrap_or(false);
+
+        let delays: Box<dyn Fn() -> Box<dyn Iterator<Item = Duration> + Send> + Send + Sync> =
+            match kind.as_str() {
+                "fixed" => {
+                    let delay = millis("delayMs")?;
+                    Box::new(move || Box::new(iter::repeat(delay)))
+                }
+                "linear" => {
+                    let (initial, step, max) =
+                        (millis("initialMs")?, millis("stepMs")?, millis("maxMs")?);
+                    Box::new(move || {
+                        Box::new(iter::successors(Some(initial.min(max)), move |delay| {
+                            Some(delay.saturating_add(step).min(max))
+                        }))
+                    })
+                }
+                "exponential" => {
+                    let (initial, max) = (millis("initialMs")?, millis("maxMs")?);
+                    let multiplier = backoff
+                        .get::<_, f64>("multiplier")?
+                        .filter(|multiplier| multiplier.is_finite() && *multiplier >= 1.0)
+                        .ok_or_else(|| {
+                            napi_err("reconnect backoff multiplier must be a finite number >= 1")
+                        })?;
+                    Box::new(move || {
+                        Box::new(iter::successors(Some(initial.min(max)), move |delay| {
+                            Some(
+                                Duration::try_from_secs_f64(delay.as_secs_f64() * multiplier)
+                                    .map_or(max, |next| next.min(max)),
+                            )
+                        }))
+                    })
+                }
+                _ => {
+                    return Err(napi_err(
+                        "reconnect backoff type must be fixed, linear or exponential",
+                    ))
+                }
+            };
+
+        let mut builder = self.raw_builder.lock();
+        builder.reconnect_backoff(move || {
+            let delays = delays();
+            if jitter {
+                Box::new(delays.map(|delay| delay.mul_f64(rand::random::<f64>())))
+            } else {
+                delays
+            }
+        });
         Ok(self)
     }
 

@@ -19,6 +19,7 @@ napi = { version = "2.12.1", default-features = false, features = ["napi4", "tok
 napi-derive = "2.12.1"
 ngrok = {version = "0.18.0", features = ["hyper", "axum"]}
 parking_lot = "0.12.1"
+rand = "0.8.5"
 regex = "1.9.5"
 rustls = "0.23.25"
 rustls-pemfile = "2.0.0"
@@ -37,3 +38,6 @@ lto = true
 
 [package.metadata.cargo-udeps.ignore]
 normal = ["mio"]
+
+[patch.crates-io]
+ngrok = { git = "https://github.com/DayDreamDental/ngrok-rust.git", rev = "677c7b424ac9b4fef186cf48090e86142160772e" }
