@@ -37,3 +37,6 @@ lto = true
 
 [package.metadata.cargo-udeps.ignore]
 normal = ["mio"]
+
+[patch.crates-io]
+ngrok = { git = "https://github.com/DayDreamDental/ngrok-rust.git", rev = "16c1f937ee85c3e1de4bbef9a004d931dadfeb64" }
